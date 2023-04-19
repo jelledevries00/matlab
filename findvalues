@@ -1,0 +1,134 @@
+%% Select file
+clc
+close all
+clearvars
+
+m = 80;
+freqfp = 1000;
+freqxs = 60;
+
+[file,filepath] = uigetfile({'*.csv';'*.xlsx'},'Select the Forceplate Excel or CSV file');
+filename = fullfile(filepath, file);
+Data = readmatrix(filename); %No filter
+
+
+
+%% Select file 2
+[file,filepath] = uigetfile({'*.csv';'*.xlsx'},'Select the Xsens Excel or CSV file');
+filename2 = fullfile(filepath, file);
+Data2 = readmatrix(filename2); %No filter
+
+Data2 = resample(Data2,freqfp,freqxs);
+%% Create separate 
+accel_x = Data(:,1);
+accel_y = Data(:,2);
+accel_z = Data(:,3);
+
+accel2_x = Data2(:,6)*m;
+accel2_y = Data2(:,7)*m;
+accel2_z = Data2(:,8)*m;
+
+
+accmax = max(accel_z);
+accmax2 = max(accel2_x);
+adjust = (accmax2/accmax);
+
+%% help
+figure(1)
+plot(accel_z,'b')
+hold on
+legend('Max value Forceplate')
+
+[x,y] = ginput(100); 
+% Get (x,y) coordinates for all points
+% *** This assumes the entire point was made with the one 
+% call to scatter() instead of several calls to scatter(). 
+h = gco(); 
+hx = h.XData; 
+hy = h.YData; 
+
+% Find the nearest point to selection
+d = sqrt((x-hx).^2 + (y-hy).^2); 
+[~,minIdx] = min(d); 
+% Return the (x,y) and color data
+fprintf('(x,y) = (%.3f,%.3f,%)\n',hx(minIdx),hy(minIdx)); 
+
+x1 = x;
+y1 = y;
+
+figure(2)
+plot(accel2_x,'r')
+hold on
+legend('Max values Xsens')
+
+[x,y] = ginput(100); 
+% Get (x,y) coordinates for all points
+% *** This assumes the entire point was made with the one 
+% call to scatter() instead of several calls to scatter(). 
+h = gco(); 
+hx = h.XData; 
+hy = h.YData; 
+
+% Find the nearest point to selection
+d = sqrt((x-hx).^2 + (y-hy).^2); 
+[~,minIdx] = min(d); 
+% Return the (x,y) and color data
+fprintf('(x,y) = (%.3f,%.3f,%)\n',hx(minIdx),hy(minIdx)); 
+
+x2 = x;
+y2 = y;
+
+figure(3)
+plot(x1,y1)
+hold on
+plot(x2,y2)
+legend('Max values Forceplate','Max values Xsens')
+
+
+yadjust = y1 - y2;
+
+figure(4)
+plot(yadjust)
+legend('difference between y-axis')
+
+adjustmeanForceplate = mean(y1);
+adjustmeanXsens = mean(y2);
+adjustment = (adjustmeanForceplate / adjustmeanXsens);
+
+figure(5)
+plot(accel_z,'b')
+hold on
+plot(accel2_x*(adjustment),'r')
+legend('Max value Forceplate)','Max value Xsens with Average adjustment')
+
+
+percentagediff = (y1/y2);
+percentagemean = mean(percentagediff);
+figure(6)
+plot(percentagediff)
+legend('percentage diffrence')
+
+
+
+figure(8)
+subplot(2,1,1)
+plot(accel_x,'r')
+hold on
+plot(accel_y,'g')
+hold on
+plot(accel_z,'b')
+hold on
+
+subplot(2,1,2)
+plot(accel2_x,'r')
+hold on
+plot(accel2_y,'g')
+hold on
+plot(accel2_z,'b')
+
+
+figure(9)
+plot(accel_z,'b')
+hold on
+plot(accel2_x,'r')
+legend('Forceplate Verticale value','Xsens vertical value')
